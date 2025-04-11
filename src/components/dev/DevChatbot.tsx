@@ -1,11 +1,11 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Send, Code, Play, FileCode } from 'lucide-react';
+import { Bot, Send, Code, Play, FileCode, File, Paperclip, Smile, Image, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -25,7 +25,17 @@ interface Message {
     language: CodeLanguage;
     content: string;
   };
+  files?: File[];
 }
+
+const EMOJI_SET = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+  '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+  '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+  '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+  '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
+];
 
 const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,6 +47,8 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
   const [previewMode, setPreviewMode] = useState<'code' | 'output'>('code');
   const [previewOutput, setPreviewOutput] = useState<string>('');
   const [languagePrompt, setLanguagePrompt] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const codeEditorRef = useRef<HTMLIFrameElement>(null);
 
@@ -56,16 +68,21 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
+    if (!userInput.trim() && selectedFiles.length === 0) return;
     if (!apiKey) {
       toast.error("Please enter your Gemini API key first");
       return;
     }
 
     // Add user message
-    const userMessage: Message = { role: 'user', content: userInput };
+    const userMessage: Message = {
+      role: 'user',
+      content: userInput,
+      files: selectedFiles.length > 0 ? [...selectedFiles] : undefined
+    };
     setMessages(prev => [...prev, userMessage]);
     setUserInput('');
+    setSelectedFiles([]);
     setIsLoading(true);
 
     try {
@@ -101,13 +118,28 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
       // For now, simulate a response with code
       setTimeout(() => {
         // Example response with code
-        const sampleCode = userInput.toLowerCase().includes('hello world') ? 
+        let sampleCode = userInput.toLowerCase().includes('hello world') ? 
           'console.log("Hello, World!");' : 
           `// Generated code based on: "${userInput}"\n\nfunction processRequest() {\n  // Implementation would go here\n  console.log("Processing user request");\n  return "Operation completed";\n}\n\nprocessRequest();`;
         
+        // Check if there are files to analyze in the request
+        let fileAnalysisMsg = '';
+        if (userMessage.files && userMessage.files.length > 0) {
+          fileAnalysisMsg = `\n\nI've analyzed the ${userMessage.files.length} file(s) you uploaded. `;
+          
+          // Add more specific file handling for certain file types
+          const fileNames = userMessage.files.map(f => f.name).join(', ');
+          fileAnalysisMsg += `Here's code to work with ${fileNames}:`;
+          
+          // Adjust code sample to incorporate file handling
+          if (codeLanguage === 'javascript' || codeLanguage === 'typescript') {
+            sampleCode = `// Code to process the files: ${fileNames}\n\nasync function processFiles(files) {\n  for (const file of files) {\n    console.log(\`Processing file: \${file.name}\`);\n    // File processing logic would go here\n  }\n  return "Files processed successfully";\n}\n\n// Example usage:\n// processFiles(uploadedFiles);`;
+          }
+        }
+        
         const response: Message = {
           role: 'assistant',
-          content: `Here's an example of how you might implement that:`,
+          content: `Here's an example of how you might implement that:${fileAnalysisMsg}`,
           code: {
             language: codeLanguage,
             content: sampleCode
@@ -145,19 +177,27 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
       const sampleCode = `// Generated ${selectedLanguage} code\n\n`;
       let languageSpecificCode = '';
       
+      // Adjust code based on uploaded files if any
+      const hasFiles = selectedFiles.length > 0;
+      const fileMsg = hasFiles ? ` with file processing for ${selectedFiles.map(f => f.name).join(', ')}` : '';
+      
       switch(selectedLanguage) {
         case 'javascript':
         case 'typescript':
-          languageSpecificCode = `function processUserRequest() {\n  console.log("Processing in ${selectedLanguage}");\n  return "Operation completed";\n}\n\nprocessUserRequest();`;
+          languageSpecificCode = hasFiles ? 
+            `async function processUserRequest(files) {\n  console.log("Processing in ${selectedLanguage}");\n  \n  for (const file of files) {\n    console.log(\`Processing file: \${file.name}\`);\n    // Read file content and process it\n  }\n  \n  return "Operation completed with files";\n}\n\n// Call with your files array\n// processUserRequest(files);` :
+            `function processUserRequest() {\n  console.log("Processing in ${selectedLanguage}");\n  return "Operation completed";\n}\n\nprocessUserRequest();`;
           break;
         case 'python':
-          languageSpecificCode = `def process_user_request():\n    print("Processing in Python")\n    return "Operation completed"\n\nprocess_user_request()`;
+          languageSpecificCode = hasFiles ?
+            `def process_user_request(files):\n    print("Processing in Python")\n    \n    for file in files:\n        print(f"Processing file: {file.name}")\n        # Read file content and process it\n    \n    return "Operation completed with files"\n\n# Call with your files list\n# process_user_request(files)` :
+            `def process_user_request():\n    print("Processing in Python")\n    return "Operation completed"\n\nprocess_user_request()`;
           break;
         case 'html':
-          languageSpecificCode = `<!DOCTYPE html>\n<html>\n<head>\n    <title>Example</title>\n</head>\n<body>\n    <h1>Hello from HTML</h1>\n    <p>This is a sample implementation.</p>\n</body>\n</html>`;
+          languageSpecificCode = `<!DOCTYPE html>\n<html>\n<head>\n    <title>Example${fileMsg}</title>\n</head>\n<body>\n    <h1>Hello from HTML</h1>\n    <p>This is a sample implementation${fileMsg}.</p>\n</body>\n</html>`;
           break;
         default:
-          languageSpecificCode = `// Example code for ${selectedLanguage}\n// Implementation would be language-specific`;
+          languageSpecificCode = `// Example code for ${selectedLanguage}${fileMsg}\n// Implementation would be language-specific`;
       }
       
       const response: Message = {
@@ -229,6 +269,36 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+      
+      // Reset the input so the same file can be selected again if needed
+      e.target.value = '';
+      
+      toast.success(`Added ${newFiles.length} file(s)`);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const insertEmoji = useCallback((emoji: string) => {
+    setUserInput(prev => prev + emoji);
+  }, []);
+
+  const renderFilePreview = (file: File) => {
+    const isImage = file.type.startsWith('image/');
+    return (
+      <div className="text-xs text-gray-700 flex items-center gap-1">
+        {isImage ? <Image size={12} /> : <File size={12} />}
+        {file.name}
+      </div>
+    );
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -269,6 +339,19 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
                           }`}
                         >
                           {msg.content}
+                          
+                          {msg.files && msg.files.length > 0 && (
+                            <div className="mt-2 p-2 bg-white rounded border border-gray-300">
+                              <div className="text-xs font-medium text-gray-700 mb-1">Uploaded Files:</div>
+                              <div className="space-y-1">
+                                {msg.files.map((file, fileIndex) => (
+                                  <div key={fileIndex} className="text-xs">
+                                    {renderFilePreview(file)}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         {msg.code && (
                           <div className="border rounded bg-gray-900 text-gray-100 p-2 text-sm font-mono overflow-x-auto">
@@ -283,7 +366,59 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
                 )}
               </ScrollArea>
 
+              {selectedFiles.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2 max-h-16 overflow-y-auto p-2 border rounded">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="bg-gray-100 text-xs rounded px-2 py-1 flex items-center gap-1">
+                      {renderFilePreview(file)}
+                      <button onClick={() => removeFile(index)} className="ml-1 text-gray-500 hover:text-red-500">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex gap-2">
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-10 w-10">
+                        <Smile size={18} />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-2">
+                      <div className="grid grid-cols-8 gap-1">
+                        {EMOJI_SET.map((emoji, index) => (
+                          <button
+                            key={index}
+                            className="text-lg p-1 hover:bg-gray-100 rounded"
+                            onClick={() => insertEmoji(emoji)}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip size={18} />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      multiple
+                    />
+                  </Button>
+                </div>
+
                 <Textarea
                   placeholder="Ask me to code something..."
                   value={userInput}
@@ -294,8 +429,9 @@ const DevChatbot: React.FC<DevChatbotProps> = ({ isOpen, onClose }) => {
                 />
                 <Button 
                   onClick={handleSendMessage} 
-                  disabled={!userInput.trim() || isLoading || languagePrompt}
+                  disabled={(!userInput.trim() && selectedFiles.length === 0) || isLoading || languagePrompt}
                   size="icon"
+                  className="h-10 w-10"
                 >
                   <Send size={18} />
                 </Button>

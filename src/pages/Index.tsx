@@ -20,7 +20,7 @@ const Index = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <FileText size={32} className="text-pdf-primary" />
-            <h1 className="text-2xl font-bold">Acrobat Remastered</h1>
+            <h1 className="text-2xl font-bold">PDF-Edits</h1>
           </div>
           <Link to="/editor">
             <Button variant="outline" className="border-pdf-primary text-pdf-primary hover:bg-pdf-primary hover:text-white">
@@ -140,7 +140,7 @@ const Index = () => {
       <footer className="bg-pdf-dark py-6 border-t border-gray-800">
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400">© 2025 Acrobat Remastered. All rights reserved.</p>
+            <p className="text-gray-400">© 2025 PDF-Edits. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link to="/terms" className="text-gray-400 hover:text-pdf-primary">Terms</Link>
               <Link to="/privacy" className="text-gray-400 hover:text-pdf-primary">Privacy</Link>
