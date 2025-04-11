@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -18,7 +17,8 @@ import {
   Download,
   Settings,
   MessageCircle,
-  Code
+  Code,
+  Type
 } from 'lucide-react';
 
 type ToolMode = 'select' | 'text' | 'draw' | 'highlight' | 'comment' | 'form' | 'signature' | 'convert';
@@ -84,6 +84,8 @@ const Editor: React.FC = () => {
     if (tool === 'convert') {
       setShowConverter(true);
       setActiveToolMode('select'); // Reset to select after clicking convert
+    } else if (tool === 'text') {
+      toast("Text edit mode: Click on existing text to edit or click anywhere to add new text");
     } else {
       toast(`Tool selected: ${tool}`);
     }

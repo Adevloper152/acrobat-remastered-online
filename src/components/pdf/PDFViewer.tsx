@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -6,10 +7,13 @@ import {
   ChevronRight, 
   ZoomIn, 
   ZoomOut, 
-  RotateCw 
+  RotateCw,
+  Scissors,
+  Eraser
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TextEditor from './TextEditor';
+import TextLayerEditor from './TextLayerEditor';
 
 // Initialize pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -44,6 +48,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [textEdits, setTextEdits] = useState<any[]>([]);
   const [editingText, setEditingText] = useState<{id: string, content: string, x: number, y: number} | null>(null);
+  const [selectedTextElement, setSelectedTextElement] = useState<HTMLElement | null>(null);
+  const [textLayerElements, setTextLayerElements] = useState<HTMLElement[]>([]);
+  const [isEditingTextLayer, setIsEditingTextLayer] = useState<boolean>(false);
 
   // Create a URL from the file
   useEffect(() => {
@@ -53,6 +60,36 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       return () => URL.revokeObjectURL(url);
     }
   }, [file]);
+
+  // Effect to gather text layer elements after document loads
+  useEffect(() => {
+    if (toolMode === 'text') {
+      // Wait for the PDF to render its text layer
+      const timer = setTimeout(() => {
+        const textLayerDiv = document.querySelector('.react-pdf__Page__textContent');
+        if (textLayerDiv) {
+          const textElements = Array.from(textLayerDiv.querySelectorAll('span')) as HTMLElement[];
+          setTextLayerElements(textElements);
+          
+          // Make text elements selectable
+          textElements.forEach(el => {
+            el.style.cursor = 'pointer';
+            el.style.userSelect = 'text';
+            
+            el.addEventListener('click', (e) => {
+              if (toolMode === 'text') {
+                e.stopPropagation();
+                setSelectedTextElement(el);
+                setIsEditingTextLayer(true);
+              }
+            });
+          });
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentPage, toolMode, fileUrl]);
 
   const handleRotate = () => {
     setRotation((prevRotation) => (prevRotation + 90) % 360);
@@ -78,6 +115,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const handleAnnotationClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isEditingTextLayer) return;
+    
     if (toolMode === 'highlight') {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
@@ -118,6 +157,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         }
       }
     } else if (toolMode === 'text') {
+      // Check if user clicked on a text layer element
+      // If not, allow adding new text
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
         const x = e.clientX - rect.left;
@@ -168,6 +209,30 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       setEditingText(textToEdit);
       setTextEdits(textEdits.filter(text => text.id !== id));
     }
+  };
+
+  const handleTextLayerSave = (newText: string) => {
+    if (selectedTextElement && newText.trim() !== '') {
+      // Save the original content for future reference if needed
+      const originalContent = selectedTextElement.textContent;
+      
+      // Update the text content directly in the PDF's text layer
+      selectedTextElement.textContent = newText;
+      
+      // Reset editing state
+      setSelectedTextElement(null);
+      setIsEditingTextLayer(false);
+      
+      toast('PDF text updated');
+    } else {
+      setSelectedTextElement(null);
+      setIsEditingTextLayer(false);
+    }
+  };
+
+  const handleTextLayerCancel = () => {
+    setSelectedTextElement(null);
+    setIsEditingTextLayer(false);
   };
 
   const currentPageAnnotations = annotations.filter(anno => anno.page === currentPage);
@@ -239,7 +304,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             pageNumber={currentPage}
             scale={scale}
             rotate={rotation}
-            renderTextLayer={false}
+            renderTextLayer={true}
             renderAnnotationLayer={false}
             className="pdf-page"
           />
@@ -300,6 +365,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 onCancel={handleTextCancel}
               />
             </div>
+          )}
+          
+          {/* Text Layer Editor */}
+          {isEditingTextLayer && selectedTextElement && (
+            <TextLayerEditor
+              initialText={selectedTextElement.textContent || ''}
+              onSave={handleTextLayerSave}
+              onCancel={handleTextLayerCancel}
+              position={{
+                x: selectedTextElement.getBoundingClientRect().left - (canvasRef.current?.getBoundingClientRect().left || 0),
+                y: selectedTextElement.getBoundingClientRect().top - (canvasRef.current?.getBoundingClientRect().top || 0)
+              }}
+            />
           )}
         </div>
       </div>

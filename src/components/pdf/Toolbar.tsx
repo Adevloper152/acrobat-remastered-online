@@ -27,7 +27,7 @@ interface ToolbarProps {
 
 const tools = [
   { id: 'select', name: 'Select', icon: MousePointer },
-  { id: 'text', name: 'Text Edit', icon: Type },
+  { id: 'text', name: 'Text Edit', icon: Type, description: 'Edit existing text or add new text' },
   { id: 'draw', name: 'Draw', icon: Pen },
   { id: 'highlight', name: 'Highlight', icon: Highlighter },
   { id: 'comment', name: 'Comment', icon: MessageSquare },
@@ -59,6 +59,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ activeToolMode, onToolChange }) => {
             </TooltipTrigger>
             <TooltipContent side="right">
               <p>{tool.name}</p>
+              {tool.description && <p className="text-xs text-gray-400">{tool.description}</p>}
             </TooltipContent>
           </Tooltip>
         ))}
