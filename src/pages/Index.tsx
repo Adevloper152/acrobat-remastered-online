@@ -9,7 +9,8 @@ import {
   FormInput, 
   FileSignature, 
   FilePlus,
-  Lock
+  Lock,
+  Download
 } from 'lucide-react';
 
 const Index = () => {
@@ -50,7 +51,7 @@ const Index = () => {
           </div>
           <div className="mt-4 text-amber-300 flex items-center gap-2">
             <Lock size={16} />
-            <span>Some features require a subscription</span>
+            <span>Demo mode has some restrictions</span>
           </div>
         </div>
 
@@ -59,44 +60,44 @@ const Index = () => {
             icon={<Pencil className="text-pdf-primary" size={24} />} 
             title="Edit PDFs"
             description="Modify text, images, and other elements in your PDF documents with ease."
-            restriction="Limited to 5 pages in free version"
-            isPremium={false}
+            restriction="Limited to 5 pages in demo mode"
+            isRestricted={true}
           />
           <FeatureCard 
             icon={<FileCheck className="text-pdf-primary" size={24} />} 
             title="Annotate Documents"
             description="Highlight, underline, and add comments to your PDF documents."
-            restriction="Limited formatting options in free version"
-            isPremium={false}
+            restriction="Limited formatting options in demo mode"
+            isRestricted={true}
           />
           <FeatureCard 
             icon={<FormInput className="text-pdf-primary" size={24} />} 
             title="Create Forms"
             description="Add form fields to your PDFs to collect information from users."
-            restriction="Premium feature - requires subscription"
-            isPremium={true}
+            restriction="Not available in demo mode"
+            isRestricted={true}
           />
           <FeatureCard 
             icon={<FileSignature className="text-pdf-primary" size={24} />} 
             title="E-Signatures"
             description="Sign documents electronically and request signatures from others."
-            restriction="Premium feature - requires subscription"
-            isPremium={true}
+            restriction="Not available in demo mode"
+            isRestricted={true}
           />
           <FeatureCard 
             icon={<FilePlus className="text-pdf-primary" size={24} />} 
             title="Merge PDFs"
             description="Combine multiple PDF documents into a single file."
-            restriction="Limited to 2 files in free version"
-            isPremium={false}
+            restriction="Limited to 2 files in demo mode"
+            isRestricted={true}
           />
           <div className="bg-pdf-dark/50 p-6 rounded-lg border border-pdf-primary/20 flex flex-col items-center text-center hover:border-pdf-primary/40 transition-all">
             <Link to="/login" className="w-full h-full flex flex-col justify-center items-center">
-              <span className="text-xl font-medium mb-2">Get Premium</span>
-              <p className="text-gray-400">Unlock all features without restrictions</p>
-              <div className="mt-3 bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                <Lock size={14} />
-                <span>Premium</span>
+              <span className="text-xl font-medium mb-2">Get Full Version</span>
+              <p className="text-gray-400">Sign in to unlock all features without restrictions</p>
+              <div className="mt-3 bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                <Download size={14} />
+                <span>Free</span>
               </div>
             </Link>
           </div>
@@ -106,30 +107,30 @@ const Index = () => {
           <h3 className="text-2xl font-semibold mb-4 text-center">Feature Comparison</h3>
           <div className="grid grid-cols-3 gap-4 mb-4 font-medium text-center">
             <div>Feature</div>
-            <div>Free Plan</div>
-            <div className="text-pdf-primary">Premium Plan</div>
+            <div>Demo Mode</div>
+            <div className="text-green-400">Full Version</div>
           </div>
           
           {[
-            { name: "Edit PDFs", free: "Up to 5 pages", premium: "Unlimited pages" },
-            { name: "Annotate", free: "Basic tools", premium: "Advanced tools" },
-            { name: "Create Forms", free: "Not available", premium: "Full access" },
-            { name: "E-Signatures", free: "Not available", premium: "Unlimited" },
-            { name: "Merge PDFs", free: "Up to 2 files", premium: "Unlimited files" },
-            { name: "File Size", free: "Up to 10MB", premium: "Up to 100MB" },
-            { name: "AI Features", free: "Limited usage", premium: "Unlimited usage" },
+            { name: "Edit PDFs", demo: "Up to 5 pages", full: "Unlimited pages" },
+            { name: "Annotate", demo: "Basic tools", full: "Advanced tools" },
+            { name: "Create Forms", demo: "Not available", full: "Full access" },
+            { name: "E-Signatures", demo: "Not available", full: "Unlimited" },
+            { name: "Merge PDFs", demo: "Up to 2 files", full: "Unlimited files" },
+            { name: "File Size", demo: "Up to 10MB", full: "Up to 100MB" },
+            { name: "AI Features", demo: "Limited usage", full: "Unlimited usage" },
           ].map((feature, index) => (
             <div key={index} className="grid grid-cols-3 gap-4 border-t border-gray-700 py-3 text-sm text-center">
               <div>{feature.name}</div>
-              <div className="text-gray-400">{feature.free}</div>
-              <div>{feature.premium}</div>
+              <div className="text-gray-400">{feature.demo}</div>
+              <div>{feature.full}</div>
             </div>
           ))}
           
           <div className="mt-6 text-center">
             <Link to="/login">
-              <Button className="bg-pdf-primary hover:bg-pdf-secondary text-white">
-                Upgrade to Premium
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                Sign In For Full Version - It's Free!
               </Button>
             </Link>
           </div>
@@ -157,13 +158,13 @@ const FeatureCard = ({
   title, 
   description, 
   restriction,
-  isPremium
+  isRestricted
 }: { 
   icon: React.ReactNode, 
   title: string, 
   description: string,
   restriction: string,
-  isPremium: boolean
+  isRestricted: boolean
 }) => (
   <div className="bg-pdf-dark/50 p-6 rounded-lg border border-gray-800 flex flex-col items-center text-center hover:border-pdf-primary/30 transition-all">
     <div className="mb-4 p-3 bg-pdf-dark rounded-full">
@@ -171,8 +172,8 @@ const FeatureCard = ({
     </div>
     <h3 className="text-xl font-medium mb-2">{title}</h3>
     <p className="text-gray-400 mb-3">{description}</p>
-    <div className={`mt-auto text-sm px-3 py-1 rounded-full flex items-center gap-1 ${isPremium ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'}`}>
-      {isPremium && <Lock size={14} />}
+    <div className={`mt-auto text-sm px-3 py-1 rounded-full flex items-center gap-1 ${isRestricted ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'}`}>
+      {isRestricted && <Lock size={14} />}
       <span>{restriction}</span>
     </div>
   </div>
