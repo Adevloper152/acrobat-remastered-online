@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Github, Google } from 'lucide-react';
+import { Github, Mail } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -29,7 +29,7 @@ const Login: React.FC = () => {
             className="w-full flex items-center justify-center gap-2"
             variant="outline"
           >
-            <Google size={20} />
+            <Mail size={20} />
             Sign in with Google
           </Button>
           <Button 
