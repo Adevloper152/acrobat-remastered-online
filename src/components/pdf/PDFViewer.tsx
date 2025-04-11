@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -80,7 +79,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const handleAnnotationClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (toolMode === 'highlight') {
-      // This is just a demo of how annotations might work
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
         const x = e.clientX - rect.left;
@@ -133,7 +131,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           y
         });
         
-        toast('Click to add text');
+        toast('Click outside to save text');
       }
     }
   };
@@ -148,13 +146,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const handleTextSave = () => {
-    if (editingText) {
+    if (editingText && editingText.content.trim() !== '') {
       setTextEdits([...textEdits, {
         ...editingText,
         page: currentPage
       }]);
       setEditingText(null);
       toast('Text added');
+    } else if (editingText) {
+      setEditingText(null);
     }
   };
 
@@ -166,7 +166,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     const textToEdit = textEdits.find(text => text.id === id);
     if (textToEdit) {
       setEditingText(textToEdit);
-      // Remove the edit we're currently modifying
       setTextEdits(textEdits.filter(text => text.id !== id));
     }
   };
@@ -279,8 +278,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               }}
               onClick={() => handleEditExistingText(text.id)}
             >
-              <div className="bg-white p-2 shadow-lg text-black text-sm min-w-[100px]">
-                {text.content}
+              <div className="bg-white p-2 shadow-lg text-black text-sm min-w-[100px]" dangerouslySetInnerHTML={{ __html: text.content }}>
               </div>
             </div>
           ))}
