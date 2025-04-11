@@ -294,7 +294,7 @@ const Login: React.FC = () => {
                         render={({ field }) => (
                           <FormItem className="flex flex-col items-center">
                             <FormControl>
-                              <InputOTP maxLength={6} {...field} onValueChange={field.onChange}>
+                              <InputOTP maxLength={6} {...field}>
                                 <InputOTPGroup>
                                   <InputOTPSlot index={0} />
                                   <InputOTPSlot index={1} />
