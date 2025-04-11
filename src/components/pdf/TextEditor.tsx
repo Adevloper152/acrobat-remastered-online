@@ -26,12 +26,12 @@ const TextEditor: React.FC<TextEditorProps> = ({
   onCancel 
 }) => {
   const [content, setContent] = useState(initialContent);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Focus the textarea when the component mounts
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+    // Focus the editor when the component mounts
+    if (editorRef.current) {
+      editorRef.current.focus();
     }
   }, []);
 
@@ -43,8 +43,8 @@ const TextEditor: React.FC<TextEditorProps> = ({
 
   const formatText = (command: string, value: string | null = null) => {
     document.execCommand(command, false, value);
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+    if (editorRef.current) {
+      editorRef.current.focus();
     }
   };
 
@@ -81,7 +81,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
       </div>
       
       <div 
-        ref={textareaRef}
+        ref={editorRef}
         contentEditable
         dangerouslySetInnerHTML={{ __html: content }}
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
