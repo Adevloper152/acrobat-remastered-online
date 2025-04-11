@@ -8,6 +8,7 @@ import Toolbar from '@/components/pdf/Toolbar';
 import PropertiesPanel from '@/components/pdf/PropertiesPanel';
 import FileConverter from '@/components/pdf/FileConverter';
 import AIChatbot from '@/components/ai/AIChatbot';
+import DevChatbot from '@/components/dev/DevChatbot';
 import { 
   FileText, 
   Home, 
@@ -16,7 +17,8 @@ import {
   FileUp,
   Download,
   Settings,
-  MessageCircle
+  MessageCircle,
+  Code
 } from 'lucide-react';
 
 type ToolMode = 'select' | 'text' | 'draw' | 'highlight' | 'comment' | 'form' | 'signature' | 'convert';
@@ -30,6 +32,7 @@ const Editor: React.FC = () => {
   const [showProperties, setShowProperties] = useState<boolean>(false);
   const [showConverter, setShowConverter] = useState<boolean>(false);
   const [showAIChat, setShowAIChat] = useState<boolean>(false);
+  const [showDevChat, setShowDevChat] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,6 +165,11 @@ const Editor: React.FC = () => {
             <MessageCircle size={18} />
             <span className="ml-2 hidden sm:inline">AI Chat</span>
           </Button>
+          
+          <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={() => setShowDevChat(true)}>
+            <Code size={18} />
+            <span className="ml-2 hidden sm:inline">Dev Mode</span>
+          </Button>
         </div>
       </div>
 
@@ -226,6 +234,12 @@ const Editor: React.FC = () => {
       <AIChatbot 
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
+      />
+      
+      {/* Developer Chatbot Dialog */}
+      <DevChatbot
+        isOpen={showDevChat}
+        onClose={() => setShowDevChat(false)}
       />
     </div>
   );
