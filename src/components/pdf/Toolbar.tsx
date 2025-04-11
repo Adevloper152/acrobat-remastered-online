@@ -27,7 +27,7 @@ interface ToolbarProps {
 
 const tools = [
   { id: 'select', name: 'Select', icon: MousePointer },
-  { id: 'text', name: 'Text', icon: Type },
+  { id: 'text', name: 'Text Edit', icon: Type },
   { id: 'draw', name: 'Draw', icon: Pen },
   { id: 'highlight', name: 'Highlight', icon: Highlighter },
   { id: 'comment', name: 'Comment', icon: MessageSquare },

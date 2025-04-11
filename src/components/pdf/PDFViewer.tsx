@@ -10,6 +10,7 @@ import {
   RotateCw 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import TextEditor from './TextEditor';
 
 // Initialize pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -42,6 +43,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [annotations, setAnnotations] = useState<any[]>([]);
+  const [textEdits, setTextEdits] = useState<any[]>([]);
+  const [editingText, setEditingText] = useState<{id: string, content: string, x: number, y: number} | null>(null);
 
   // Create a URL from the file
   useEffect(() => {
@@ -84,7 +87,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         const y = e.clientY - rect.top;
         
         setAnnotations([...annotations, {
-          id: Date.now(),
+          id: Date.now().toString(),
           type: 'highlight',
           x,
           y,
@@ -105,7 +108,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         const comment = prompt('Enter your comment:');
         if (comment) {
           setAnnotations([...annotations, {
-            id: Date.now(),
+            id: Date.now().toString(),
             type: 'comment',
             x,
             y,
@@ -116,10 +119,60 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           toast('Comment added');
         }
       }
+    } else if (toolMode === 'text') {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const newTextId = Date.now().toString();
+        setEditingText({
+          id: newTextId,
+          content: '',
+          x,
+          y
+        });
+        
+        toast('Click to add text');
+      }
+    }
+  };
+
+  const handleTextChange = (content: string) => {
+    if (editingText) {
+      setEditingText({
+        ...editingText,
+        content
+      });
+    }
+  };
+
+  const handleTextSave = () => {
+    if (editingText) {
+      setTextEdits([...textEdits, {
+        ...editingText,
+        page: currentPage
+      }]);
+      setEditingText(null);
+      toast('Text added');
+    }
+  };
+
+  const handleTextCancel = () => {
+    setEditingText(null);
+  };
+
+  const handleEditExistingText = (id: string) => {
+    const textToEdit = textEdits.find(text => text.id === id);
+    if (textToEdit) {
+      setEditingText(textToEdit);
+      // Remove the edit we're currently modifying
+      setTextEdits(textEdits.filter(text => text.id !== id));
     }
   };
 
   const currentPageAnnotations = annotations.filter(anno => anno.page === currentPage);
+  const currentPageTextEdits = textEdits.filter(text => text.page === currentPage);
 
   return (
     <div className="flex flex-col items-center">
@@ -214,6 +267,42 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               )}
             </div>
           ))}
+          
+          {/* Text Edits Layer */}
+          {currentPageTextEdits.map((text) => (
+            <div
+              key={text.id}
+              className="annotation-item text-edit-item cursor-pointer"
+              style={{
+                left: `${text.x}px`,
+                top: `${text.y}px`,
+              }}
+              onClick={() => handleEditExistingText(text.id)}
+            >
+              <div className="bg-white p-2 shadow-lg text-black text-sm min-w-[100px]">
+                {text.content}
+              </div>
+            </div>
+          ))}
+          
+          {/* Active Text Editor */}
+          {editingText && (
+            <div
+              className="annotation-item"
+              style={{
+                left: `${editingText.x}px`,
+                top: `${editingText.y}px`,
+                zIndex: 1000
+              }}
+            >
+              <TextEditor 
+                initialContent={editingText.content}
+                onChange={handleTextChange}
+                onSave={handleTextSave}
+                onCancel={handleTextCancel}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

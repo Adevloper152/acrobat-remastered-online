@@ -110,3 +110,7 @@
 .annotation-item {
   @apply absolute pointer-events-auto;
 }
+
+.text-edit-item {
+  @apply hover:ring-2 hover:ring-blue-500;
+}
