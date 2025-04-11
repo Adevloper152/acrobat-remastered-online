@@ -8,12 +8,12 @@ import {
   AlignLeft, 
   AlignCenter, 
   AlignRight, 
-  Check, 
   X,
   Type,
   PaintBucket
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 
 interface TextEditorProps {
   initialContent: string;
@@ -78,6 +78,10 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }
   };
 
+  const handleDoubleClick = () => {
+    formatText('bold');
+  };
+
   return (
     <div ref={wrapperRef} className="bg-white border border-gray-300 rounded shadow-lg p-2 min-w-[250px]">
       <div className="flex flex-wrap gap-1 mb-2 border-b pb-2">
@@ -136,7 +140,12 @@ const TextEditor: React.FC<TextEditorProps> = ({
                 <div
                   key={color}
                   className="w-6 h-6 rounded cursor-pointer border border-gray-300 hover:scale-110 transition-transform"
-                  style={{ backgroundColor: color }}
+                  style={{ 
+                    backgroundColor: color,
+                    backgroundImage: color === 'transparent' ? 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0)' : 'none',
+                    backgroundSize: '10px 10px',
+                    backgroundPosition: '0 0, 5px 5px'
+                  }}
                   onClick={() => formatText('hiliteColor', color)}
                 />
               ))}
@@ -145,18 +154,29 @@ const TextEditor: React.FC<TextEditorProps> = ({
         </Popover>
       </div>
       
-      <div 
-        ref={editorRef}
-        contentEditable
-        dangerouslySetInnerHTML={{ __html: content }}
-        onInput={(e) => {
-          const newContent = e.currentTarget.innerHTML;
-          setContent(newContent);
-          onChange(newContent);
-        }}
-        onKeyDown={handleKeyDown}
-        className="min-h-[100px] min-w-[200px] outline-none p-2 max-w-[400px] text-black"
-      />
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <div 
+            ref={editorRef}
+            contentEditable
+            dangerouslySetInnerHTML={{ __html: content }}
+            onInput={(e) => {
+              const newContent = e.currentTarget.innerHTML;
+              setContent(newContent);
+              onChange(newContent);
+            }}
+            onKeyDown={handleKeyDown}
+            onDoubleClick={handleDoubleClick}
+            className="min-h-[100px] min-w-[200px] outline-none p-2 max-w-[400px] text-black"
+            style={{ backgroundColor: 'transparent' }}
+          />
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => formatText('bold')}>Bold</ContextMenuItem>
+          <ContextMenuItem onClick={() => formatText('italic')}>Italic</ContextMenuItem>
+          <ContextMenuItem onClick={() => formatText('underline')}>Underline</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
       
       <div className="flex justify-end gap-2 mt-2 pt-2 border-t">
         <Button variant="ghost" size="sm" onClick={onCancel}>

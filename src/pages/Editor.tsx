@@ -6,6 +6,8 @@ import PDFViewer from '@/components/pdf/PDFViewer';
 import { Button } from '@/components/ui/button';
 import Toolbar from '@/components/pdf/Toolbar';
 import PropertiesPanel from '@/components/pdf/PropertiesPanel';
+import FileConverter from '@/components/pdf/FileConverter';
+import AIChatbot from '@/components/ai/AIChatbot';
 import { 
   FileText, 
   Home, 
@@ -13,10 +15,11 @@ import {
   Upload,
   FileUp,
   Download,
-  Settings
+  Settings,
+  MessageCircle
 } from 'lucide-react';
 
-type ToolMode = 'select' | 'text' | 'draw' | 'highlight' | 'comment' | 'form' | 'signature';
+type ToolMode = 'select' | 'text' | 'draw' | 'highlight' | 'comment' | 'form' | 'signature' | 'convert';
 
 const Editor: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -25,18 +28,25 @@ const Editor: React.FC = () => {
   const [scale, setScale] = useState<number>(1.0);
   const [activeToolMode, setActiveToolMode] = useState<ToolMode>('select');
   const [showProperties, setShowProperties] = useState<boolean>(false);
+  const [showConverter, setShowConverter] = useState<boolean>(false);
+  const [showAIChat, setShowAIChat] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files[0]) {
       const selectedFile = files[0];
-      if (selectedFile.type === 'application/pdf') {
+      
+      // Check for PDF or other supported formats
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+      const supportedFormats = ['pdf', 'docx', 'doc', 'txt', 'jpg', 'png'];
+      
+      if (supportedFormats.includes(fileExtension || '')) {
         setFile(selectedFile);
         toast.success(`File loaded: ${selectedFile.name}`);
         setCurrentPage(1);
       } else {
-        toast.error('Please select a valid PDF file');
+        toast.error('Unsupported file format. Please select a PDF, Word, Text, or Image file.');
       }
     }
   };
@@ -67,7 +77,13 @@ const Editor: React.FC = () => {
 
   const handleToolChange = (tool: ToolMode) => {
     setActiveToolMode(tool);
-    toast(`Tool selected: ${tool}`);
+    
+    if (tool === 'convert') {
+      setShowConverter(true);
+      setActiveToolMode('select'); // Reset to select after clicking convert
+    } else {
+      toast(`Tool selected: ${tool}`);
+    }
   };
 
   const handleSave = () => {
@@ -93,13 +109,17 @@ const Editor: React.FC = () => {
     setShowProperties(!showProperties);
   };
 
+  const toggleAIChat = () => {
+    setShowAIChat(!showAIChat);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-pdf-darker text-white">
       {/* Top Bar */}
       <div className="bg-pdf-dark border-b border-gray-800 p-2 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <FileText size={24} className="text-pdf-primary" />
-          <h1 className="font-bold hidden sm:block">Acrobat Remastered</h1>
+          <h1 className="font-bold hidden sm:block">PDF-Edit</h1>
         </div>
         
         <div className="flex items-center gap-2">
@@ -125,7 +145,7 @@ const Editor: React.FC = () => {
             ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
-            accept=".pdf"
+            accept=".pdf,.docx,.doc,.txt,.jpg,.png"
           />
           
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={handleDownload}>
@@ -136,6 +156,11 @@ const Editor: React.FC = () => {
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={toggleProperties}>
             <Settings size={18} />
             <span className="ml-2 hidden sm:inline">Properties</span>
+          </Button>
+          
+          <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={toggleAIChat}>
+            <MessageCircle size={18} />
+            <span className="ml-2 hidden sm:inline">AI Chat</span>
           </Button>
         </div>
       </div>
@@ -164,13 +189,13 @@ const Editor: React.FC = () => {
           ) : (
             <div className="h-full flex flex-col items-center justify-center">
               <FileUp size={64} className="text-gray-600 mb-4" />
-              <h2 className="text-xl font-medium text-gray-400 mb-2">No PDF Document Loaded</h2>
-              <p className="text-gray-500 mb-6">Upload a PDF to get started</p>
+              <h2 className="text-xl font-medium text-gray-400 mb-2">No Document Loaded</h2>
+              <p className="text-gray-500 mb-6">Upload a PDF, Word, Text, or Image file to get started</p>
               <Button 
                 onClick={handleUploadClick} 
                 className="bg-pdf-primary hover:bg-pdf-secondary text-white"
               >
-                Upload PDF
+                Upload File
               </Button>
             </div>
           )}
@@ -189,6 +214,19 @@ const Editor: React.FC = () => {
           {file ? `Page ${currentPage} of ${numPages}` : ''}
         </div>
       </div>
+
+      {/* File Converter Dialog */}
+      <FileConverter 
+        isOpen={showConverter} 
+        onClose={() => setShowConverter(false)} 
+        currentFile={file}
+      />
+
+      {/* AI Chatbot Dialog */}
+      <AIChatbot 
+        isOpen={showAIChat}
+        onClose={() => setShowAIChat(false)}
+      />
     </div>
   );
 };

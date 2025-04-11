@@ -9,16 +9,16 @@ import {
   Highlighter,
   MessageSquare,
   FormInput,
-  PenTool,
+  FileSignature,
   Eraser,
   Scissors,
   ImagePlus,
   Link,
-  FileSignature
+  FileOutput
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type ToolMode = 'select' | 'text' | 'draw' | 'highlight' | 'comment' | 'form' | 'signature';
+type ToolMode = 'select' | 'text' | 'draw' | 'highlight' | 'comment' | 'form' | 'signature' | 'convert';
 
 interface ToolbarProps {
   activeToolMode: ToolMode;
@@ -33,6 +33,7 @@ const tools = [
   { id: 'comment', name: 'Comment', icon: MessageSquare },
   { id: 'form', name: 'Form', icon: FormInput },
   { id: 'signature', name: 'Signature', icon: FileSignature },
+  { id: 'convert', name: 'Convert', icon: FileOutput },
 ];
 
 const Toolbar: React.FC<ToolbarProps> = ({ activeToolMode, onToolChange }) => {
